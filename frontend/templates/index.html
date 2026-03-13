@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RetainIQ — Data Quality & Churn Prediction System</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<style>
+.hero-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 5rem 0;
+}
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+}
+.orb-1 { width: 400px; height: 400px; background: rgba(0,212,255,0.12); top: -100px; right: -100px; animation: float 6s ease-in-out infinite; }
+.orb-2 { width: 300px; height: 300px; background: rgba(139,92,246,0.1); bottom: 0; left: -50px; animation: float 8s ease-in-out infinite reverse; }
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  background: rgba(0,212,255,0.1);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: 100px;
+  padding: 0.3rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--accent-cyan);
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+}
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -1px;
+  margin-bottom: 1.5rem;
+}
+.hero-title .highlight {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.hero-desc {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 560px;
+  margin-bottom: 2.5rem;
+}
+.hero-stats {
+  display: flex; gap: 2.5rem; margin-top: 3rem;
+  border-top: 1px solid var(--border);
+  padding-top: 2rem;
+}
+.hero-stat-val {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+}
+.hero-stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem; }
+
+/* Terminal card */
+.terminal-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0,0,0,0.6), var(--glow-cyan);
+}
+.terminal-bar {
+  background: rgba(0,212,255,0.05);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  display: flex; align-items: center; gap: 0.5rem;
+}
+.terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-red { background: #ef4444; }
+.dot-yellow { background: #f59e0b; }
+.dot-green { background: #10b981; }
+.terminal-title { font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-muted); margin-left: auto; }
+.terminal-body { padding: 1.5rem; }
+.terminal-line {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  margin-bottom: 0.5rem;
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+}
+.t1 { animation-delay: 0.5s; color: var(--text-muted); }
+.t2 { animation-delay: 1s; color: var(--accent-cyan); }
+.t3 { animation-delay: 1.5s; color: var(--accent-green); }
+.t4 { animation-delay: 2s; color: var(--text-secondary); }
+.t5 { animation-delay: 2.5s; color: var(--accent-green); }
+.t6 { animation-delay: 3s; color: var(--accent-yellow); }
+.t7 { animation-delay: 3.5s; color: var(--accent-cyan); }
+.t8 { animation-delay: 4s; color: var(--text-secondary); }
+
+/* Features */
+.features-section { padding: 6rem 0; }
+.feature-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 2rem;
+  height: 100%;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.feature-card:hover {
+  border-color: var(--border-bright);
+  transform: translateY(-6px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4), var(--glow-cyan);
+}
+.feature-icon-wrap {
+  width: 56px; height: 56px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+  margin-bottom: 1.25rem;
+}
+.feature-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+.feature-desc { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.6; }
+
+/* Pipeline */
+.pipeline-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+.step-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--accent-cyan);
+  background: rgba(0,212,255,0.1);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: 8px;
+  padding: 0.4rem 0.8rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.step-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.3rem;
+}
+.step-desc { font-size: 0.83rem; color: var(--text-secondary); line-height: 1.5; }
+
+/* CTA */
+.cta-section {
+  padding: 5rem 0;
+  text-align: center;
+  position: relative;
+}
+.cta-section::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 600px; height: 300px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse, rgba(0,212,255,0.08), transparent 70%);
+  pointer-events: none;
+}
+</style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="/">Retain<span>IQ</span></a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <i class="bi bi-list text-white fs-4"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item"><a class="nav-link active" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/upload">Upload</a></li>
+        <li class="nav-item"><a class="nav-link" href="/dashboard">Quality</a></li>
+        <li class="nav-item"><a class="nav-link" href="/prediction">Predict</a></li>
+        <li class="nav-item"><a class="nav-link" href="/performance">Models</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero-section">
+  <div class="hero-orb orb-1"></div>
+  <div class="hero-orb orb-2"></div>
+  <div class="container position-relative">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6 anim-up">
+        <div class="hero-tag"><span>⬡</span> ML-Powered Analytics Platform</div>
+        <h1 class="hero-title">
+          Predict Churn.<br>
+          <span class="highlight">Retain More.<br>Data-Driven.</span>
+        </h1>
+        <p class="hero-desc">
+          An end-to-end machine learning system combining advanced data quality analysis with intelligent customer churn prediction — built for modern telecom and subscription businesses.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="/upload" class="btn-cyber-fill">
+            <i class="bi bi-upload me-2"></i>Start Analysis
+          </a>
+          <a href="/prediction" class="btn-cyber">
+            <i class="bi bi-cpu me-2"></i>Predict Now
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="hero-stat-val">3</div>
+            <div class="hero-stat-label">ML Models</div>
+          </div>
+          <div>
+            <div class="hero-stat-val">95%+</div>
+            <div class="hero-stat-label">AUC Score</div>
+          </div>
+          <div>
+            <div class="hero-stat-val">8</div>
+            <div class="hero-stat-label">Quality Metrics</div>
+          </div>
+          <div>
+            <div class="hero-stat-val">Real-time</div>
+            <div class="hero-stat-label">Predictions</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 anim-up-2">
+        <div class="terminal-card">
+          <div class="terminal-bar">
+            <div class="terminal-dot dot-red"></div>
+            <div class="terminal-dot dot-yellow"></div>
+            <div class="terminal-dot dot-green"></div>
+            <span class="terminal-title">retainiq — analysis engine</span>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-line t1">$ python analyze.py --dataset telecom_churn.csv</div>
+            <div class="terminal-line t2">→ Loading dataset: 1005 rows × 21 columns</div>
+            <div class="terminal-line t3">✓ Data quality score computed: 84.2 / 100</div>
+            <div class="terminal-line t4">→ Missing values: 2.98%  |  Duplicates: 0.5%</div>
+            <div class="terminal-line t4">→ Outliers detected: 14 (IQR method)</div>
+            <div class="terminal-line t5">✓ Models trained: LR | RF | GradBoost</div>
+            <div class="terminal-line t6">⚡ Best model: Random Forest</div>
+            <div class="terminal-line t7">→ ROC-AUC: 0.9312  |  F1: 0.8847</div>
+            <div class="terminal-line t8">✓ Prediction engine ready. Awaiting input...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features-section">
+  <div class="container">
+    <div class="text-center mb-5 anim-up">
+      <div class="section-subtitle">Platform Capabilities</div>
+      <h2 class="section-title" style="font-size:2.2rem;">Everything You Need for<br><span style="color:var(--accent-cyan)">Intelligent Retention Analysis</span></h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-md-4 anim-up-1">
+        <div class="feature-card">
+          <div class="feature-icon-wrap" style="background:rgba(0,212,255,0.1)">📊</div>
+          <div class="feature-title">Data Quality Engine</div>
+          <div class="feature-desc">Automated analysis of missing values, duplicates, outliers, type inconsistencies, and class imbalance with a unified quality score.</div>
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <span class="tag tag-cyan">IQR Outliers</span>
+            <span class="tag tag-cyan">Z-Score</span>
+            <span class="tag tag-cyan">Heatmaps</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 anim-up-2">
+        <div class="feature-card">
+          <div class="feature-icon-wrap" style="background:rgba(139,92,246,0.1)">🤖</div>
+          <div class="feature-title">Multi-Model ML Pipeline</div>
+          <div class="feature-desc">Train Logistic Regression, Random Forest, and Gradient Boosting simultaneously. Auto-selects the best model by ROC-AUC.</div>
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <span class="tag tag-cyan">Auto-Select</span>
+            <span class="tag tag-cyan">5 Metrics</span>
+            <span class="tag tag-cyan">Feature Importance</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 anim-up-3">
+        <div class="feature-card">
+          <div class="feature-icon-wrap" style="background:rgba(16,185,129,0.1)">⚡</div>
+          <div class="feature-title">Real-Time Prediction</div>
+          <div class="feature-desc">Enter customer attributes and get instant churn probability with risk level, AI-generated insights, and actionable recommendations.</div>
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <span class="tag tag-green">Probability</span>
+            <span class="tag tag-green">Risk Level</span>
+            <span class="tag tag-green">AI Insights</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 anim-up-1">
+        <div class="feature-card">
+          <div class="feature-icon-wrap" style="background:rgba(245,158,11,0.1)">📈</div>
+          <div class="feature-title">Interactive Dashboards</div>
+          <div class="feature-desc">Visualize confusion matrices, ROC curves, feature importance, correlation heatmaps, and quality gauges with Chart.js.</div>
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <span class="tag tag-yellow">ROC Curve</span>
+            <span class="tag tag-yellow">Confusion Matrix</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 anim-up-2">
+        <div class="feature-card">
+          <div class="feature-icon-wrap" style="background:rgba(239,68,68,0.1)">📋</div>
+          <div class="feature-title">PDF Quality Report</div>
+          <div class="feature-desc">Download a professional data quality report with all metrics, cleaning suggestions, and dataset statistics — ready for presentation.</div>
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <span class="tag tag-red">Downloadable</span>
+            <span class="tag tag-red">Professional</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 anim-up-3">
+        <div class="feature-card">
+          <div class="feature-icon-wrap" style="background:rgba(99,102,241,0.1)">🧠</div>
+          <div class="feature-title">AI-Powered Insights</div>
+          <div class="feature-desc">Context-aware recommendations explaining why data quality issues matter and what drives churn in your customer base.</div>
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            <span class="tag tag-cyan">Auto-Generated</span>
+            <span class="tag tag-cyan">Actionable</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pipeline -->
+<section style="padding:4rem 0; border-top: 1px solid var(--border);">
+  <div class="container">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5">
+        <div class="section-subtitle">How It Works</div>
+        <h2 class="section-title">End-to-End<br><span style="color:var(--accent-cyan)">ML Pipeline</span></h2>
+        <p class="mt-3" style="color:var(--text-secondary);font-size:0.9rem;line-height:1.7;">From raw CSV to actionable churn predictions — a fully automated data science workflow built for production.</p>
+      </div>
+      <div class="col-lg-7">
+        <div class="pipeline-step anim-up-1">
+          <div class="step-num">01</div>
+          <div><div class="step-title">Upload Your Dataset</div><div class="step-desc">Drag and drop any CSV file. The system auto-detects column types and generates an instant preview with statistics.</div></div>
+        </div>
+        <div class="pipeline-step anim-up-2">
+          <div class="step-num">02</div>
+          <div><div class="step-title">Analyze Data Quality</div><div class="step-desc">Get a comprehensive quality score with detailed breakdowns of missing values, outliers, duplicates, and correlations.</div></div>
+        </div>
+        <div class="pipeline-step anim-up-3">
+          <div class="step-num">03</div>
+          <div><div class="step-title">Train ML Models</div><div class="step-desc">Three models train simultaneously on your data. Best model selected automatically based on ROC-AUC performance.</div></div>
+        </div>
+        <div class="pipeline-step anim-up-4">
+          <div class="step-num">04</div>
+          <div><div class="step-title">Predict & Act</div><div class="step-desc">Enter customer attributes for instant churn prediction with probability scores and AI-driven retention insights.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="section-subtitle">Ready to Start?</div>
+    <h2 class="section-title" style="font-size:2.5rem;margin-bottom:1.5rem;">
+      Analyze. Predict. <span style="color:var(--accent-cyan)">Retain.</span>
+    </h2>
+    <p style="color:var(--text-secondary);margin-bottom:2.5rem;font-size:1rem;">
+      Upload your dataset or use our sample telecom data to explore the full system.
+    </p>
+    <div class="d-flex justify-content-center gap-3 flex-wrap">
+      <a href="/upload" class="btn-cyber-fill">
+        <i class="bi bi-cloud-upload me-2"></i>Upload Dataset
+      </a>
+      <a href="/dashboard" class="btn-cyber">
+        <i class="bi bi-graph-up me-2"></i>View Dashboard
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="border-top:1px solid var(--border); padding:2rem 0; text-align:center;">
+  <div class="container">
+    <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);">
+      RetainIQ — Data Quality-Aware Customer Retention Prediction System &nbsp;|&nbsp; Built with Flask + scikit-learn + Chart.js
+    </span>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

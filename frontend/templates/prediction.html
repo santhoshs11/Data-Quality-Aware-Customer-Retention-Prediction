@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Churn Prediction — RetainIQ</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.main{padding:2rem 0 4rem;}
+.prob-bar{height:12px;background:rgba(99,179,237,0.1);border-radius:6px;overflow:hidden;margin-top:0.5rem;}
+.prob-fill{height:100%;border-radius:6px;transition:width 1.2s cubic-bezier(0.34,1.56,0.64,1);}
+select.form-cyber option{background:var(--bg-card);}
+</style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="/">Retain<span>IQ</span></a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <i class="bi bi-list text-white fs-4"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/upload">Upload</a></li>
+        <li class="nav-item"><a class="nav-link" href="/dashboard">Quality</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/prediction">Predict</a></li>
+        <li class="nav-item"><a class="nav-link" href="/performance">Models</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container main">
+  <div class="mb-4 anim-up">
+    <div class="section-subtitle">Prediction Engine</div>
+    <h1 class="section-title">Customer Churn Prediction</h1>
+    <p style="color:var(--text-secondary);font-size:0.88rem;">Enter customer attributes to predict churn probability using the trained model.</p>
+  </div>
+
+  <!-- Model not trained warning -->
+  <div id="noModelWarning" class="card-dark mb-4" style="border-color:rgba(245,158,11,0.4);display:none;">
+    <div class="d-flex align-items-center gap-3">
+      <span style="font-size:1.5rem;">⚠️</span>
+      <div>
+        <div style="font-family:var(--font-display);font-weight:700;">Model Not Trained</div>
+        <div style="font-size:0.83rem;color:var(--text-secondary);">Please train the model first before making predictions.</div>
+      </div>
+      <a href="/upload" class="btn-cyber ms-auto">Train Model</a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Input Form -->
+    <div class="col-lg-6 anim-up-1">
+      <div class="card-dark">
+        <div class="chart-title">📋 Customer Attributes</div>
+        <div class="row g-3">
+          <div class="col-6">
+            <label class="form-label-cyber">Gender</label>
+            <select class="form-cyber" id="gender">
+              <option value="Male">Male</option><option value="Female">Female</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Senior Citizen</label>
+            <select class="form-cyber" id="seniorCitizen">
+              <option value="0">No</option><option value="1">Yes</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Partner</label>
+            <select class="form-cyber" id="partner">
+              <option value="Yes">Yes</option><option value="No">No</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Dependents</label>
+            <select class="form-cyber" id="dependents">
+              <option value="No">No</option><option value="Yes">Yes</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Tenure (months)</label>
+            <input type="number" class="form-cyber" id="tenure" value="12" min="0" max="72">
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Phone Service</label>
+            <select class="form-cyber" id="phoneService">
+              <option value="Yes">Yes</option><option value="No">No</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Internet Service</label>
+            <select class="form-cyber" id="internetService">
+              <option value="Fiber optic">Fiber optic</option>
+              <option value="DSL">DSL</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Contract Type</label>
+            <select class="form-cyber" id="contract">
+              <option value="Month-to-month">Month-to-month</option>
+              <option value="One year">One year</option>
+              <option value="Two year">Two year</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Paperless Billing</label>
+            <select class="form-cyber" id="paperlessBilling">
+              <option value="Yes">Yes</option><option value="No">No</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Payment Method</label>
+            <select class="form-cyber" id="paymentMethod">
+              <option value="Electronic check">Electronic check</option>
+              <option value="Mailed check">Mailed check</option>
+              <option value="Bank transfer (automatic)">Bank transfer</option>
+              <option value="Credit card (automatic)">Credit card</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Monthly Charges ($)</label>
+            <input type="number" class="form-cyber" id="monthlyCharges" value="65" min="0" max="200" step="0.01">
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Total Charges ($)</label>
+            <input type="number" class="form-cyber" id="totalCharges" value="780" min="0" step="0.01">
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Online Security</label>
+            <select class="form-cyber" id="onlineSecurity">
+              <option value="No">No</option><option value="Yes">Yes</option><option value="No internet service">No internet</option>
+            </select>
+          </div>
+          <div class="col-6">
+            <label class="form-label-cyber">Tech Support</label>
+            <select class="form-cyber" id="techSupport">
+              <option value="No">No</option><option value="Yes">Yes</option><option value="No internet service">No internet</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+          <button class="btn-cyber-fill" id="predictBtn">
+            <i class="bi bi-cpu me-2"></i>Predict Churn
+          </button>
+          <button class="btn-cyber" id="randomBtn">
+            <i class="bi bi-shuffle me-2"></i>Random Sample
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="col-lg-6 anim-up-2">
+      <div id="resultEmpty" class="card-dark text-center" style="padding:4rem 2rem;">
+        <div style="font-size:3.5rem;margin-bottom:1rem;opacity:0.3;">🤖</div>
+        <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-muted);">Awaiting prediction</div>
+        <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;">Fill in customer attributes and click Predict</div>
+      </div>
+
+      <div id="resultPanel" style="display:none;">
+        <!-- Prediction Box -->
+        <div class="prediction-result mb-4" id="predictionBox">
+          <div class="prediction-icon" id="predIcon">🤔</div>
+          <div class="prediction-label" id="predLabel">—</div>
+          <div class="prediction-prob" id="predProb">Probability: —</div>
+          <div class="mt-2" id="predRisk"></div>
+        </div>
+
+        <!-- Probability Bar -->
+        <div class="card-dark mb-4">
+          <div class="chart-title">Churn Probability Breakdown</div>
+          <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+              <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--accent-green)">STAY</span>
+              <span id="stayPct" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted)">—</span>
+            </div>
+            <div class="prob-bar">
+              <div class="prob-fill" id="stayBar" style="background:var(--accent-green);width:0%"></div>
+            </div>
+          </div>
+          <div>
+            <div class="d-flex justify-content-between mb-1">
+              <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--accent-red)">CHURN</span>
+              <span id="churnPct" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-muted)">—</span>
+            </div>
+            <div class="prob-bar">
+              <div class="prob-fill" id="churnBar" style="background:var(--accent-red);width:0%"></div>
+            </div>
+          </div>
+          <div class="mt-3 pt-2" style="border-top:1px solid var(--border);">
+            <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-muted);">MODEL USED: </span>
+            <span id="modelUsed" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--accent-cyan);">—</span>
+          </div>
+        </div>
+
+        <!-- Gauge chart -->
+        <div class="card-dark mb-4">
+          <div class="chart-title">Risk Gauge</div>
+          <canvas id="riskGauge" height="160"></canvas>
+        </div>
+
+        <!-- AI Insights -->
+        <div class="card-dark">
+          <div class="chart-title">🧠 AI Insights</div>
+          <div id="predInsights" class="d-flex flex-column gap-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+Chart.defaults.color = '#94a3b8';
+
+let riskChart = null;
+
+function showToast(msg, type='info') {
+  const tc=document.getElementById('toastContainer');
+  const t=document.createElement('div'); t.className='toast-cyber';
+  const icons={info:'ℹ️',success:'✅',error:'🚨',warning:'⚠️'};
+  t.textContent=(icons[type]||'')+' '+msg; tc.appendChild(t);
+  setTimeout(()=>t.remove(),4000);
+}
+
+function getFormData() {
+  return {
+    gender: document.getElementById('gender').value,
+    SeniorCitizen: parseInt(document.getElementById('seniorCitizen').value),
+    Partner: document.getElementById('partner').value,
+    Dependents: document.getElementById('dependents').value,
+    tenure: parseFloat(document.getElementById('tenure').value)||0,
+    PhoneService: document.getElementById('phoneService').value,
+    MultipleLines: 'No',
+    InternetService: document.getElementById('internetService').value,
+    OnlineSecurity: document.getElementById('onlineSecurity').value,
+    OnlineBackup: 'No',
+    DeviceProtection: 'No',
+    TechSupport: document.getElementById('techSupport').value,
+    StreamingTV: 'No',
+    StreamingMovies: 'No',
+    Contract: document.getElementById('contract').value,
+    PaperlessBilling: document.getElementById('paperlessBilling').value,
+    PaymentMethod: document.getElementById('paymentMethod').value,
+    MonthlyCharges: parseFloat(document.getElementById('monthlyCharges').value)||0,
+    TotalCharges: parseFloat(document.getElementById('totalCharges').value)||0
+  };
+}
+
+function randomSample() {
+  const genders=['Male','Female'], contracts=['Month-to-month','One year','Two year'];
+  const payments=['Electronic check','Mailed check','Bank transfer (automatic)','Credit card (automatic)'];
+  const services=['Fiber optic','DSL','No'];
+  document.getElementById('gender').value=genders[Math.floor(Math.random()*2)];
+  document.getElementById('seniorCitizen').value=Math.random()<0.16?1:0;
+  document.getElementById('partner').value=Math.random()<0.5?'Yes':'No';
+  document.getElementById('dependents').value=Math.random()<0.3?'Yes':'No';
+  document.getElementById('tenure').value=Math.floor(Math.random()*72)+1;
+  document.getElementById('internetService').value=services[Math.floor(Math.random()*3)];
+  document.getElementById('contract').value=contracts[Math.floor(Math.random()*3)];
+  document.getElementById('paymentMethod').value=payments[Math.floor(Math.random()*4)];
+  const mc = Math.round((Math.random()*100+18)*100)/100;
+  const t = parseInt(document.getElementById('tenure').value);
+  document.getElementById('monthlyCharges').value=mc;
+  document.getElementById('totalCharges').value=Math.round(mc*t*100)/100;
+  document.getElementById('onlineSecurity').value=Math.random()<0.5?'Yes':'No';
+  document.getElementById('techSupport').value=Math.random()<0.5?'Yes':'No';
+}
+
+function drawRiskGauge(prob) {
+  if(riskChart){riskChart.destroy();}
+  const ctx = document.getElementById('riskGauge').getContext('2d');
+  const color = prob > 0.7 ? '#ef4444' : prob > 0.4 ? '#f59e0b' : '#10b981';
+  riskChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets:[{
+        data:[prob*100, 100-prob*100],
+        backgroundColor:[color,'rgba(99,179,237,0.06)'],
+        borderWidth:0, circumference:180, rotation:-90
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{enabled:false}},
+      cutout:'80%'
+    }
+  });
+}
+
+function showResult(data) {
+  document.getElementById('resultEmpty').style.display='none';
+  document.getElementById('resultPanel').style.display='block';
+
+  const prob = data.probability;
+  const churn = data.churn;
+  const box = document.getElementById('predictionBox');
+  box.className = 'prediction-result mb-4 ' + (churn?'prediction-churn':'prediction-stay');
+  document.getElementById('predIcon').textContent = churn ? '🚨' : '💚';
+  document.getElementById('predLabel').textContent = churn ? 'Customer Will CHURN' : 'Customer Will STAY';
+  document.getElementById('predLabel').style.color = churn ? 'var(--accent-red)' : 'var(--accent-green)';
+  document.getElementById('predProb').textContent = `Churn Probability: ${(prob*100).toFixed(1)}%`;
+
+  const risk = data.risk_level;
+  const rColors={High:'var(--accent-red)',Medium:'var(--accent-yellow)',Low:'var(--accent-green)'};
+  document.getElementById('predRisk').innerHTML=`<span class="tag" style="background:${rColors[risk]}22;color:${rColors[risk]};border-color:${rColors[risk]}44;font-size:0.8rem">${risk} Risk</span>`;
+
+  const churnPct = Math.round(prob*100);
+  const stayPct = 100-churnPct;
+  document.getElementById('churnPct').textContent = churnPct+'%';
+  document.getElementById('stayPct').textContent = stayPct+'%';
+  setTimeout(()=>{
+    document.getElementById('churnBar').style.width = churnPct+'%';
+    document.getElementById('stayBar').style.width = stayPct+'%';
+  }, 100);
+
+  document.getElementById('modelUsed').textContent = data.model_used||'—';
+  drawRiskGauge(prob);
+
+  // Insights
+  if(data.insights){
+    document.getElementById('predInsights').innerHTML = data.insights.slice(0,3).map(i=>`
+      <div class="insight-card">
+        <div class="insight-icon">${i.icon}</div>
+        <div><div class="insight-title">${i.title}</div><div class="insight-text">${i.text}</div></div>
+      </div>`).join('');
+  }
+}
+
+async function predict() {
+  const btn = document.getElementById('predictBtn');
+  btn.disabled=true; btn.textContent='Predicting...';
+  try {
+    const payload = getFormData();
+    const res = await fetch('/predict-churn',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const data = await res.json();
+    if(data.error){
+      if(data.error.includes('not trained')){
+        document.getElementById('noModelWarning').style.display='block';
+      }
+      showToast(data.error,'error'); return;
+    }
+    showResult(data);
+    showToast('Prediction complete!','success');
+  } catch(e){ showToast('Prediction failed: '+e.message,'error'); }
+  finally{ btn.disabled=false; btn.innerHTML='<i class="bi bi-cpu me-2"></i>Predict Churn'; }
+}
+
+document.getElementById('predictBtn').addEventListener('click', predict);
+document.getElementById('randomBtn').addEventListener('click', randomSample);
+
+// Check model status
+fetch('/health').then(r=>r.json()).then(d=>{
+  if(!d.model_loaded) document.getElementById('noModelWarning').style.display='block';
+});
+</script>
+</body>
+</html>

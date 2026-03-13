@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Quality Dashboard — RetainIQ</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+.main { padding:2rem 0 4rem; }
+.gauge-svg { display:block; margin:0 auto; }
+</style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg">
+  <div class="container">
+    <a class="navbar-brand" href="/">Retain<span>IQ</span></a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <i class="bi bi-list text-white fs-4"></i>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="/upload">Upload</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/dashboard">Quality</a></li>
+        <li class="nav-item"><a class="nav-link" href="/prediction">Predict</a></li>
+        <li class="nav-item"><a class="nav-link" href="/performance">Models</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container main">
+  <div class="d-flex justify-content-between align-items-start mb-4 flex-wrap gap-3">
+    <div>
+      <div class="section-subtitle">Analytics Module</div>
+      <h1 class="section-title">Data Quality Dashboard</h1>
+    </div>
+    <div class="d-flex gap-2">
+      <button class="btn-cyber" id="analyzeBtn"><i class="bi bi-play-circle me-1"></i>Run Analysis</button>
+      <a href="/download-report" class="btn-purple" id="downloadBtn" style="display:none;text-decoration:none;padding:0.65rem 1.4rem;border-radius:8px;">
+        <i class="bi bi-file-pdf me-1"></i>PDF Report
+      </a>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loadingState" class="text-center py-5" style="display:none;">
+    <div class="spinner-cyber mb-3"></div>
+    <div style="font-family:var(--font-mono);color:var(--text-muted);font-size:0.82rem;" id="loadingMsg">Analyzing dataset...</div>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div id="dashContent" style="display:none;">
+
+    <!-- Row 1: Score + Key Metrics -->
+    <div class="row g-4 mb-4">
+      <!-- Quality Score Gauge -->
+      <div class="col-lg-3 col-md-6">
+        <div class="card-dark h-100 text-center" style="padding:2rem 1rem;">
+          <div class="chart-title">Quality Score</div>
+          <canvas id="gaugeChart" width="200" height="200" class="gauge-svg"></canvas>
+          <div class="gauge-value mt-2" id="scoreVal" style="color:var(--accent-cyan);">—</div>
+          <div class="gauge-label">/ 100</div>
+          <div id="scoreGrade" class="mt-2"></div>
+        </div>
+      </div>
+      <!-- Stats -->
+      <div class="col-lg-9 col-md-6">
+        <div class="row g-3 h-100">
+          <div class="col-6 col-md-3">
+            <div class="metric-card h-100">
+              <div class="metric-label">Total Rows</div>
+              <div class="metric-value" id="m-rows">—</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="metric-card h-100">
+              <div class="metric-label">Missing %</div>
+              <div class="metric-value" id="m-missing" style="color:var(--accent-yellow);">—</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="metric-card h-100">
+              <div class="metric-label">Duplicates</div>
+              <div class="metric-value" id="m-dups" style="color:var(--accent-red);">—</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="metric-card h-100">
+              <div class="metric-label">Outliers</div>
+              <div class="metric-value" id="m-outliers" style="color:var(--accent-purple);">—</div>
+            </div>
+          </div>
+          <!-- Imbalance card -->
+          <div class="col-12">
+            <div class="metric-card">
+              <div class="metric-label">Class Imbalance</div>
+              <div id="imbalanceInfo" style="font-family:var(--font-mono);font-size:0.82rem;color:var(--text-secondary);margin-top:0.5rem;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Charts -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-6">
+        <div class="chart-box">
+          <div class="chart-title">Missing Values by Column</div>
+          <canvas id="missingChart" height="220"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="chart-box">
+          <div class="chart-title">Outlier Distribution</div>
+          <canvas id="outlierChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-lg-8">
+        <div class="chart-box">
+          <div class="chart-title">Feature Correlation Heatmap</div>
+          <canvas id="correlationChart" height="300"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="chart-box h-100">
+          <div class="chart-title">Data Health Indicators</div>
+          <canvas id="radarChart" height="260"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- High correlations -->
+    <div class="row g-4 mb-4" id="highCorrSection" style="display:none;">
+      <div class="col-12">
+        <div class="card-dark">
+          <div class="chart-title">⚠ High Correlations Detected</div>
+          <div id="highCorrList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI Insights + Suggestions -->
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="chart-title">🧠 AI Insights</div>
+          <div id="insightsList" class="d-flex flex-column gap-3"></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card-dark">
+          <div class="chart-title">🔧 Cleaning Recommendations</div>
+          <div id="suggestionsList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Empty state -->
+  <div id="emptyState" class="text-center py-5">
+    <div style="font-size:3rem;margin-bottom:1rem;opacity:0.3;">📊</div>
+    <div style="font-family:var(--font-display);font-size:1.1rem;color:var(--text-muted);">Click "Run Analysis" to analyze a dataset</div>
+    <div style="font-size:0.82rem;color:var(--text-muted);margin-top:0.5rem;">Or upload a dataset first on the Upload page</div>
+    <a href="/upload" class="btn-cyber mt-3">Load Dataset</a>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.borderColor = 'rgba(99,179,237,0.1)';
+
+let charts = {};
+
+function showToast(msg, type='info') {
+  const tc = document.getElementById('toastContainer');
+  const t = document.createElement('div'); t.className='toast-cyber';
+  const icons={info:'ℹ️',success:'✅',error:'🚨',warning:'⚠️'};
+  t.textContent=(icons[type]||'')+' '+msg; tc.appendChild(t);
+  setTimeout(()=>t.remove(),4000);
+}
+
+function destroyChart(id) { if(charts[id]){charts[id].destroy();delete charts[id];} }
+
+function drawGauge(score) {
+  destroyChart('gauge');
+  const ctx = document.getElementById('gaugeChart').getContext('2d');
+  const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+  charts['gauge'] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      datasets: [{
+        data: [score, 100-score],
+        backgroundColor: [color, 'rgba(99,179,237,0.06)'],
+        borderWidth: 0,
+        circumference: 270,
+        rotation: -135
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend:{display:false}, tooltip:{enabled:false} },
+      cutout: '78%'
+    }
+  });
+  const el = document.getElementById('scoreVal');
+  el.textContent = score;
+  el.style.color = color;
+  const grade = score>=80?'Excellent':score>=60?'Good':score>=40?'Fair':'Poor';
+  const gcolor = score>=80?'var(--accent-green)':score>=60?'var(--accent-yellow)':'var(--accent-red)';
+  document.getElementById('scoreGrade').innerHTML=`<span class="tag" style="background:${gcolor}22;color:${gcolor};border-color:${gcolor}44">${grade}</span>`;
+}
+
+function drawMissingChart(missing) {
+  destroyChart('missing');
+  const byCol = missing.by_column;
+  const cols = Object.keys(byCol).filter(k=>byCol[k].percentage>0);
+  if(!cols.length){ document.getElementById('missingChart').parentElement.innerHTML='<div class="chart-title">Missing Values</div><div style="text-align:center;color:var(--accent-green);padding:2rem;font-family:var(--font-mono)">✓ No missing values detected</div>'; return; }
+  const ctx = document.getElementById('missingChart').getContext('2d');
+  charts['missing'] = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:cols,
+      datasets:[{
+        label:'Missing %',
+        data:cols.map(c=>byCol[c].percentage),
+        backgroundColor:'rgba(245,158,11,0.6)',
+        borderColor:'rgba(245,158,11,0.9)',
+        borderWidth:1,
+        borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{ticks:{callback:v=>v+'%'},grid:{color:'rgba(99,179,237,0.06)'}},
+        x:{ticks:{maxRotation:45},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function drawOutlierChart(outliers) {
+  destroyChart('outlier');
+  const byCol = outliers.by_column;
+  const cols = Object.keys(byCol);
+  if(!cols.length) return;
+  const ctx = document.getElementById('outlierChart').getContext('2d');
+  charts['outlier'] = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:cols,
+      datasets:[{
+        label:'Outlier %',
+        data:cols.map(c=>byCol[c].percentage),
+        backgroundColor:'rgba(139,92,246,0.6)',
+        borderColor:'rgba(139,92,246,0.9)',
+        borderWidth:1,
+        borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{ticks:{callback:v=>v+'%'},grid:{color:'rgba(99,179,237,0.06)'}},
+        x:{ticks:{maxRotation:45},grid:{display:false}}
+      }
+    }
+  });
+}
+
+function drawCorrelationChart(corr) {
+  destroyChart('corr');
+  const cols = corr.columns;
+  if(!cols || cols.length<2) return;
+  const matrix = corr.matrix;
+  const labels = cols;
+  const data = [];
+  for(let i=0;i<cols.length;i++){
+    for(let j=0;j<cols.length;j++){
+      const val = matrix[cols[i]]?.[cols[j]]??0;
+      data.push({x:j, y:i, v:val});
+    }
+  }
+  const ctx = document.getElementById('correlationChart').getContext('2d');
+  charts['corr'] = new Chart(ctx, {
+    type:'scatter',
+    data:{datasets:[{
+      data:data,
+      backgroundColor:ctx2=>{
+        const v=ctx2.raw?.v??0;
+        const a=Math.abs(v);
+        if(v>0) return `rgba(0,212,255,${a*0.9})`;
+        return `rgba(239,68,68,${a*0.9})`;
+      },
+      pointRadius:data.length>100?8:14
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:ctx=>{
+          const d=ctx.raw; return `${labels[d.y]} × ${labels[d.x]}: ${d.v.toFixed(3)}`;
+        }}}
+      },
+      scales:{
+        x:{type:'linear',min:-0.5,max:cols.length-0.5,ticks:{callback:v=>labels[v]||'',maxRotation:45},grid:{display:false}},
+        y:{type:'linear',min:-0.5,max:cols.length-0.5,ticks:{callback:v=>labels[v]||''},grid:{color:'rgba(99,179,237,0.05)'}}
+      }
+    }
+  });
+}
+
+function drawRadarChart(score, missing, dups, outliers) {
+  destroyChart('radar');
+  const ctx = document.getElementById('radarChart').getContext('2d');
+  const missScore = Math.max(0, 100 - missing.total_percentage*5);
+  const dupScore = Math.max(0, 100 - dups.percentage*5);
+  const outScore = Math.max(0, 100 - outliers.total_outliers*0.5);
+  charts['radar'] = new Chart(ctx, {
+    type:'radar',
+    data:{
+      labels:['Completeness','Uniqueness','Outlier-Free','Consistency','Overall'],
+      datasets:[{
+        label:'Data Quality',
+        data:[missScore,dupScore,outScore,85,score],
+        backgroundColor:'rgba(0,212,255,0.1)',
+        borderColor:'rgba(0,212,255,0.7)',
+        pointBackgroundColor:'var(--accent-cyan)',
+        borderWidth:2
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{r:{
+        min:0,max:100,
+        grid:{color:'rgba(99,179,237,0.1)'},
+        pointLabels:{color:'#94a3b8',font:{size:11}},
+        ticks:{display:false}
+      }}
+    }
+  });
+}
+
+function renderInsights(insights) {
+  const el = document.getElementById('insightsList');
+  el.innerHTML = insights.map(i=>`
+    <div class="insight-card">
+      <div class="insight-icon">${i.icon}</div>
+      <div><div class="insight-title">${i.title}</div><div class="insight-text">${i.text}</div></div>
+    </div>`).join('');
+}
+
+function renderSuggestions(suggestions) {
+  const el = document.getElementById('suggestionsList');
+  if(!suggestions.length){ el.innerHTML='<div style="color:var(--accent-green);font-family:var(--font-mono);font-size:0.82rem;">✓ No cleaning actions needed</div>'; return; }
+  const typeClass={critical:'tag-red',warning:'tag-yellow',info:'tag-cyan'};
+  el.innerHTML = suggestions.map(s=>`
+    <div class="d-flex align-items-start gap-2 mb-3">
+      <span class="tag ${typeClass[s.type]||'tag-cyan'}" style="margin-top:2px">${s.type}</span>
+      <span style="font-size:0.83rem;color:var(--text-secondary)">${s.action}</span>
+    </div>`).join('');
+}
+
+async function runAnalysis() {
+  document.getElementById('emptyState').style.display='none';
+  document.getElementById('dashContent').style.display='none';
+  document.getElementById('loadingState').style.display='block';
+  const msgs=['Detecting missing values...','Scanning for duplicates...','Running IQR outlier detection...','Computing feature correlations...','Calculating quality score...','Generating insights...'];
+  let i=0; const iv=setInterval(()=>{if(i<msgs.length)document.getElementById('loadingMsg').textContent=msgs[i++];},600);
+  try {
+    const res = await fetch('/analyze-data',{method:'POST'});
+    const data = await res.json();
+    clearInterval(iv);
+    document.getElementById('loadingState').style.display='none';
+    if(data.error){ showToast(data.error,'error'); document.getElementById('emptyState').style.display='block'; return; }
+    document.getElementById('dashContent').style.display='block';
+    document.getElementById('downloadBtn').style.display='inline-flex';
+
+    // Metrics
+    document.getElementById('m-rows').textContent = data.dataset_stats.rows;
+    document.getElementById('m-missing').textContent = data.missing_values.total_percentage+'%';
+    document.getElementById('m-dups').textContent = data.duplicates.count;
+    document.getElementById('m-outliers').textContent = data.outliers.total_outliers;
+
+    // Imbalance
+    const imb = data.class_imbalance;
+    if(imb.target_column){
+      const dist = Object.entries(imb.distribution).map(([k,v])=>`${k}: ${v}`).join(' | ');
+      document.getElementById('imbalanceInfo').innerHTML = `
+        Target: <span style="color:var(--accent-cyan)">${imb.target_column}</span> &nbsp;|&nbsp;
+        ${dist} &nbsp;|&nbsp; Ratio: <span style="${imb.is_imbalanced?'color:var(--accent-red)':'color:var(--accent-green)'}">${imb.imbalance_ratio}</span>
+        &nbsp;— ${imb.recommendation}`;
+    } else {
+      document.getElementById('imbalanceInfo').textContent = 'No target column detected';
+    }
+
+    drawGauge(data.quality_score);
+    drawMissingChart(data.missing_values);
+    drawOutlierChart(data.outliers);
+    drawCorrelationChart(data.correlation);
+    drawRadarChart(data.quality_score, data.missing_values, data.duplicates, data.outliers);
+
+    // High correlations
+    if(data.correlation.high_correlations?.length){
+      document.getElementById('highCorrSection').style.display='block';
+      document.getElementById('highCorrList').innerHTML = data.correlation.high_correlations.map(c=>`
+        <div class="d-flex align-items-center gap-3 mb-2 p-2 rounded" style="background:rgba(245,158,11,0.06);border:1px solid rgba(245,158,11,0.2)">
+          <span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--accent-cyan)">${c.feature1}</span>
+          <span style="color:var(--text-muted)">↔</span>
+          <span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--accent-cyan)">${c.feature2}</span>
+          <span class="ms-auto tag tag-yellow">${c.correlation}</span>
+        </div>`).join('');
+    }
+
+    renderInsights(data.ai_insights);
+    renderSuggestions(data.cleaning_suggestions);
+    showToast('Analysis complete!','success');
+  } catch(e) {
+    clearInterval(iv);
+    document.getElementById('loadingState').style.display='none';
+    document.getElementById('emptyState').style.display='block';
+    showToast('Analysis failed: '+e.message,'error');
+  }
+}
+
+document.getElementById('analyzeBtn').addEventListener('click', runAnalysis);
+// Auto-run on load
+window.addEventListener('load', () => setTimeout(runAnalysis, 300));
+</script>
+</body>
+</html>
